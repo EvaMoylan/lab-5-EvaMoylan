@@ -61,7 +61,6 @@ Detective Wickham reaches out to you...
 
 > A crime has taken place and I need your help! There was a murder in SQL City sometime on January 15, 2018. Could you retrieve the crime scene report from the police department’s database and follow the clues to find the person responsible for the murder?!
 
-##Crime Report
 ```{r}
 #| label: inspecting-crime-scene-report
 
@@ -76,7 +75,7 @@ crime_scene_report |>
 **Follow the evidence to the person responsible for the murder, building a report as you go.**
 Hint: Make sure you check for interviews with any suspects!
 
-##Witness Interviews
+### Witness Interviews
 ```{r}
 #| label: finding-witnesses
 
@@ -94,7 +93,7 @@ interview |>
   pull(transcript) #1 = Morty Schapiro, #2 = Annabel Miller
 
 ```
-##Applying Witness Accounts
+### Applying Witness Accounts
 ```{r}
 #| label: applying-witness-accounts
 
@@ -111,7 +110,8 @@ get_fit_now_check_in |>
                                     pattern = "H42W"),
          membership_id = str_detect(string = membership_id,
                                     pattern = "48Z")) |>
-  filter(membership_status == "gold",
+  filter(gender == "male",
+         membership_status == "gold",
          check_in_date == "20180109",
          membership_id == TRUE,
          plate_number == TRUE) |>
