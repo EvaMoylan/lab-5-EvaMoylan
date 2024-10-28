@@ -46,9 +46,7 @@ This code chunk will read in all of the tables of data for you. Don't modify or 
 #| label: read-in-data
 
 library(tidyverse)
-
-# If purrr is not detected, install the package
-if (!"purrr" %in% installed.packages()) install.packages("purrr")
+library(purrr)
 
 source("https://raw.githubusercontent.com/atheobold/groupworthy-data-science/main/labs/instructions/lab-5-setup.R")
 ```
@@ -101,9 +99,10 @@ interview |>
 
 get_fit_now_check_in |>
   inner_join(get_fit_now_member,
-              by = join_by(membership_id == id)) |>
+             by = join_by(membership_id == id)) |>
   inner_join(person,
-              by = join_by(person_id == id)) |>
+             by = join_by(person_id == id,
+                          name == name)) |> #two keys, name and id's
   inner_join(drivers_license,
              by = join_by(license_id == id)) |>
   mutate(plate_number = str_detect(string = plate_number,
@@ -115,7 +114,7 @@ get_fit_now_check_in |>
          check_in_date == "20180109",
          membership_id == TRUE,
          plate_number == TRUE) |>
-  pull(name.x)
+  pull(name)
 
 ```
 
