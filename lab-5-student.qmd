@@ -1,7 +1,7 @@
 ---
 title: "Lab 5: Murder in SQL City"
 author: "Eva Moylan"
-date: "10/27/24"
+date: "11/08/24"
 format: 
   html:  
     embed-resources: true
@@ -63,8 +63,9 @@ Detective Wickham reaches out to you...
 #| label: inspecting-crime-scene-report
 
 crime_scene_report |>
+  mutate(date = ymd(date)) |>
   filter(type == "murder",
-         date == "20180115",
+         date == "2018-01-15",
          city == "SQL City") |>
   pull(description)
 
@@ -91,6 +92,7 @@ interview |>
   pull(transcript) #1 = Morty Schapiro, #2 = Annabel Miller
 
 ```
+
 ### Applying Witness Accounts
 ```{r}
 #| label: applying-witness-accounts
@@ -118,7 +120,44 @@ get_fit_now_check_in |>
 
 ```
 
+### Bowers's Interview
+```{r}
+
+interview |>
+  filter(person_id == 67318) |>
+  pull(transcript)
+
+```
+
+### Investigate Bowers's Statement
+```{r}
+
+drivers_license |>
+  filter(gender == "female",
+         height %in% 65|67,
+         hair_color == "red",
+         car_make == "Tesla",
+         car_model == "Model S") |>
+  inner_join(person,
+            by = join_by(id == license_id), #Two columns named id now with different IDs
+            suffix = c("_license","_person")) |> #Now person ID is labeled and 'ID' is license
+  semi_join(facebook_event_checkin,
+            by = join_by(id_person == person_id)) |> #only one person left
+  pull(name)
+
+```
+
+### Priestly's Interview
+```{r}
+
+interview |>
+  filter(person_id == 99716) |> #No interview for Priestly
+  pull(transcript)
+
+```
 
 ## And the final suspect is...
 
-*Jeremy Bowers*
+*Miranda Priestly hired Jeremy Bowers to commit the crime.*
+
+*Reflection: Originally, I didn't investigate beyond finding Jeremy Bowers. When investigating his statement, I was able to gain practice using semi_join() and using this method is more efficient than joining and using filter(). In the future, I will double check I'm reading all the hints on questions!*
