@@ -98,25 +98,43 @@ interview |>
 #| label: applying-witness-accounts
 
 #Combine data sets to have member_id, member_status, license plate, check-in date
-
-get_fit_now_check_in |>
-  inner_join(get_fit_now_member,
+suspect_1 <- get_fit_now_check_in |>
+  right_join(get_fit_now_member,
              by = join_by(membership_id == id)) |>
-  inner_join(person,
+  left_join(person,
              by = join_by(person_id == id,
                           name == name)) |> #two keys, name and id's
   inner_join(drivers_license,
              by = join_by(license_id == id)) |>
   mutate(plate_number = str_detect(string = plate_number,
-                                    pattern = "H42W"),
-         membership_id = str_detect(string = membership_id,
-                                    pattern = "48Z")) |>
+                                    pattern = "H42W")) |>
   filter(gender == "male",
          membership_status == "gold",
-         check_in_date == "20180109",
-         membership_id == TRUE,
-         plate_number == TRUE) |>
-  pull(name)
+         check_in_date == "20180109", #change this
+         plate_number == TRUE,
+         str_detect(string = membership_id,
+                    pattern = "^48Z"))
+
+#Note: Join functions changed from inner to right and left, ^ added to membership_id pattern detection and membership_id str_detect moved to a filter instead of a mutate.
+
+#get_fit_now_check_in |>
+  #inner_join(get_fit_now_member,
+             #by = join_by(membership_id == id)) |>
+  #inner_join(person,
+             #by = join_by(person_id == id,
+                          #name == name)) |> #two keys, name and id's
+  #inner_join(drivers_license,
+             #by = join_by(license_id == id)) |>
+  #mutate(plate_number = str_detect(string = plate_number,
+                                    #pattern = "H42W"),
+         #membership_id = str_detect(string = membership_id,
+                                    #pattern = "48Z")) |>
+  #filter(gender == "male",
+         #membership_status == "gold",
+         #check_in_date == "20180109", #change this
+         #membership_id == TRUE,
+         #plate_number == TRUE) |>
+  #pull(name)
 
 ```
 
@@ -124,35 +142,63 @@ get_fit_now_check_in |>
 ```{r}
 
 interview |>
-  filter(person_id == 67318) |>
+  semi_join(suspect_1, #Keep only the row containing the suspect found in previous step
+            join_by(person_id)) |>
   pull(transcript)
+
+#Note: Filtering by person_id was replaced with a semi_join.
 
 ```
 
 ### Investigate Bowers's Statement
 ```{r}
 
-drivers_license |>
+no_concert <- facebook_event_checkin |>
+  filter(event_name != "SQL Symphony Concert") #Keep only people who did not attend the concert
+
+suspect_2 <- person |>
+  anti_join(no_concert, #remove people who didn't attend the concert
+            by = join_by(id == person_id)) |>
+  inner_join(drivers_license,
+             by = join_by(license_id == id),
+             suffix = c("_person", "_license")) |>
   filter(gender == "female",
          height %in% 65|67,
          hair_color == "red",
          car_make == "Tesla",
          car_model == "Model S") |>
-  inner_join(person,
-            by = join_by(id == license_id), #Two columns named id now with different IDs
-            suffix = c("_license","_person")) |> #Now person ID is labeled and 'ID' is license
-  semi_join(facebook_event_checkin,
-            by = join_by(id_person == person_id)) |> #only one person left
-  pull(name)
+  inner_join(income,
+            by = join_by(ssn)) |>
+  slice_max(annual_income)
 
+#Note: This code was re-written to include anti_join. A no_concert object was
+      #created with all people who didn't attend the concert. The other joining 
+      #steps were re-ordered to include the anti_join at the beginning of the 
+      #suspect_2 pipeline.
+
+#drivers_license |>
+  #filter(gender == "female",
+         #height %in% 65|67,
+         #hair_color == "red",
+         #car_make == "Tesla",
+         #car_model == "Model S") |>
+  #inner_join(person,
+            #by = join_by(id == license_id), #Two columns named id now with different IDs
+            #suffix = c("_license","_person")) |> #Now person ID is labeled and 'ID' is license
+  #semi_join(facebook_event_checkin,
+            #by = join_by(id_person == person_id)) |> #only one person left
+  #pull(name)
 ```
 
 ### Priestly's Interview
 ```{r}
 
 interview |>
-  filter(person_id == 99716) |> #No interview for Priestly
-  pull(transcript)
+  semi_join(suspect_2, #Keep only the row containing the suspect found in previous step
+            join_by(person_id)) |>
+  pull(transcript) #error: so no interview for Miranda Priestly
+
+#Note: Filtering by person_id was replaced with a semi_join.
 
 ```
 
