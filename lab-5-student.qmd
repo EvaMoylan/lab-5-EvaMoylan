@@ -117,29 +117,11 @@ suspect_1 <- get_fit_now_check_in |>
 
 #Note: Join functions changed from inner to right and left, ^ added to membership_id pattern detection and membership_id str_detect moved to a filter instead of a mutate.
 
-#get_fit_now_check_in |>
-  #inner_join(get_fit_now_member,
-             #by = join_by(membership_id == id)) |>
-  #inner_join(person,
-             #by = join_by(person_id == id,
-                          #name == name)) |> #two keys, name and id's
-  #inner_join(drivers_license,
-             #by = join_by(license_id == id)) |>
-  #mutate(plate_number = str_detect(string = plate_number,
-                                    #pattern = "H42W"),
-         #membership_id = str_detect(string = membership_id,
-                                    #pattern = "48Z")) |>
-  #filter(gender == "male",
-         #membership_status == "gold",
-         #check_in_date == "20180109", #change this
-         #membership_id == TRUE,
-         #plate_number == TRUE) |>
-  #pull(name)
-
 ```
 
 ### Bowers's Interview
 ```{r}
+#| label: suspect1-interview
 
 interview |>
   semi_join(suspect_1, #Keep only the row containing the suspect found in previous step
@@ -152,9 +134,15 @@ interview |>
 
 ### Investigate Bowers's Statement
 ```{r}
+#| label: investigate-bowers
 
 no_concert <- facebook_event_checkin |>
-  filter(event_name != "SQL Symphony Concert") #Keep only people who did not attend the concert
+  mutate(date = ymd(date), #Convert to year-month-day format
+         `date_2017` = if_else(year(date) != 2017, #If the year isn't 2017
+                            TRUE, #Then true
+                            FALSE)) |> #If else, then false
+  filter(event_name != "SQL Symphony Concert", #Keep only people who did not attend the concert
+         `date_2017` == TRUE) #Keep only dates not in 2017
 
 suspect_2 <- person |>
   anti_join(no_concert, #remove people who didn't attend the concert
@@ -172,26 +160,15 @@ suspect_2 <- person |>
   slice_max(annual_income)
 
 #Note: This code was re-written to include anti_join. A no_concert object was
-      #created with all people who didn't attend the concert. The other joining 
-      #steps were re-ordered to include the anti_join at the beginning of the 
-      #suspect_2 pipeline.
-
-#drivers_license |>
-  #filter(gender == "female",
-         #height %in% 65|67,
-         #hair_color == "red",
-         #car_make == "Tesla",
-         #car_model == "Model S") |>
-  #inner_join(person,
-            #by = join_by(id == license_id), #Two columns named id now with different IDs
-            #suffix = c("_license","_person")) |> #Now person ID is labeled and 'ID' is license
-  #semi_join(facebook_event_checkin,
-            #by = join_by(id_person == person_id)) |> #only one person left
-  #pull(name)
+      #created with all people who didn't attend the concert in years besides 2017. 
+      #The other joining steps were re-ordered to include the anti_join at the 
+      #beginning of the suspect_2 pipeline.
 ```
 
 ### Priestly's Interview
 ```{r}
+#| label: suspect2-interview
+#| eval: false
 
 interview |>
   semi_join(suspect_2, #Keep only the row containing the suspect found in previous step
